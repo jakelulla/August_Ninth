@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Countdown to August 9, 2026 🎉</title>
+  <style>
+    :root{
+      --bg:#070b24;
+      --accent:#ff7be5;
+      --accent2:#00f5ff;
+      --muted:#9aa6bb;
+      font-family: 'Poppins', sans-serif;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:radial-gradient(circle at center, #1a1e42 0%, #070b24 100%);color:#fff;overflow:hidden}
+    .wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+    h1{font-size:2.5rem;margin-bottom:0.5em;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:pulse 2s infinite alternate;font-weight:800}
+    @keyframes pulse {from{transform:scale(1)}to{transform:scale(1.05)}}
+    h2{font-size:1.25rem;color:var(--muted);margin-bottom:1.5em}
+    .countdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:20px;max-width:800px;width:100%}
+    .tile{background:rgba(255,255,255,0.05);border-radius:20px;padding:20px;box-shadow:0 0 20px rgba(255,255,255,0.1);transition:transform .3s ease, box-shadow .3s ease}
+    .tile:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(255,255,255,0.3)}
+    .num{font-size:2rem;font-weight:700;color:var(--accent2);text-shadow:0 0 10px var(--accent2)}
+    .label{font-size:0.9rem;color:var(--muted);margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+    .confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:100}
+  </style>
+</head>
+<body>
+  <canvas class="confetti" id="confetti"></canvas>
+  <div class="wrap">
+    <h1>🎉 Countdown to August 9, 2026 🎆</h1>
+    <h2>Welcome.</h2>
+    <div class="countdown" id="countdown-grid">
+      <div class="tile"><div class="num" id="months">--</div><div class="label">Months</div></div>
+      <div class="tile"><div class="num" id="weeks">--</div><div class="label">Weeks</div></div>
+      <div class="tile"><div class="num" id="days">--</div><div class="label">Days</div></div>
+      <div class="tile"><div class="num" id="hours">--</div><div class="label">Hours</div></div>
+      <div class="tile"><div class="num" id="minutes">--</div><div class="label">Minutes</div></div>
+      <div class="tile"><div class="num" id="seconds">--</div><div class="label">Seconds</div></div>
+      <div class="tile" style="grid-column:span 2"><div class="num" id="milliseconds">--</div><div class="label">Milliseconds</div></div>
+    </div>
+  </div>
+
+  <script>
+    const target = new Date(2026, 7, 9, 0, 0, 0, 0);
+    const el = {
+      months: document.getElementById('months'),
+      weeks: document.getElementById('weeks'),
+      days: document.getElementById('days'),
+      hours: document.getElementById('hours'),
+      minutes: document.getElementById('minutes'),
+      seconds: document.getElementById('seconds'),
+      milliseconds: document.getElementById('milliseconds')
+    };
+
+    function breakdown(now, target){
+      if(now >= target) return {months:0,weeks:0,days:0,hours:0,minutes:0,seconds:0,milliseconds:0,done:true};
+      let months = 0;
+      let cursor = new Date(now.getTime());
+      while(true){
+        const tryNext = new Date(cursor.getTime());
+        tryNext.setMonth(tryNext.getMonth()+1);
+        if(tryNext <= target){months++;cursor = tryNext;} else break;
+      }
+      let remaining = target.getTime() - cursor.getTime();
+      const msInSecond = 1000, msInMinute = 60000, msInHour = 3600000, msInDay = 86400000, msInWeek = 604800000;
+      const weeks = Math.floor(remaining / msInWeek); remaining -= weeks * msInWeek;
+      const days = Math.floor(remaining / msInDay); remaining -= days * msInDay;
+      const hours = Math.floor(remaining / msInHour); remaining -= hours * msInHour;
+      const minutes = Math.floor(remaining / msInMinute); remaining -= minutes * msInMinute;
+      const seconds = Math.floor(remaining / msInSecond); remaining -= seconds * msInSecond;
+      const milliseconds = remaining;
+      return {months,weeks,days,hours,minutes,seconds,milliseconds,done:false};
+    }
+
+    function render(){
+      const now = new Date();
+      const parts = breakdown(now, target);
+      el.months.textContent = parts.months;
+      el.weeks.textContent = parts.weeks;
+      el.days.textContent = parts.days;
+      el.hours.textContent = parts.hours.toString().padStart(2,'0');
+      el.minutes.textContent = parts.minutes.toString().padStart(2,'0');
+      el.seconds.textContent = parts.seconds.toString().padStart(2,'0');
+      el.milliseconds.textContent = parts.milliseconds.toString().padStart(3,'0');
+
+      if(parts.done){
+        cancelAnimationFrame(rafId);
+        launchConfetti();
+      } else {
+        rafId = requestAnimationFrame(render);
+      }
+    }
+    let rafId = requestAnimationFrame(render);
+
+    // Simple confetti animation
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let confettiPieces = [];
+    function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+    window.addEventListener('resize',resize);resize();
+
+    function launchConfetti(){
+      confettiPieces = Array.from({length:200},()=>({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height-canvas.height,
+        r:Math.random()*6+4,
+        c:`hsl(${Math.random()*360},100%,60%)`,
+        s:Math.random()*3+2,
+        a:Math.random()*360
+      }));
+      requestAnimationFrame(confettiAnimate);
+    }
+    function confettiAnimate(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confettiPieces.forEach(p=>{
+        p.y+=p.s;
+        if(p.y>canvas.height) p.y=-10;
+        p.a+=p.s;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.a*Math.PI/180);
+        ctx.fillStyle=p.c;
+        ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+        ctx.restore();
+      });
+      requestAnimationFrame(confettiAnimate);
+    }
+  </script>
+</body>
+</html>
